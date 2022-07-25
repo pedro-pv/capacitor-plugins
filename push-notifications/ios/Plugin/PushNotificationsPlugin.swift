@@ -15,10 +15,17 @@ enum PushNotificationsPermissions: String {
 
 @objc(PushNotificationsPlugin)
 public class PushNotificationsPlugin: CAPPlugin {
+
     private let notificationDelegateHandler = PushNotificationsHandler()
     private var appDelegateRegistrationCalled: Bool = false
 
     override public func load() {
+    /* 
+        Added for iOS
+     */
+    NotificationCenter.default.addObserver(self, selector: #selector(self.handleDataMessage(notification:)), name: Notification.Name("OnRemoteMessage"), object: nil)
+
+
         self.bridge?.notificationRouter.pushNotificationHandler = self.notificationDelegateHandler
         self.notificationDelegateHandler.plugin = self
 
@@ -183,5 +190,12 @@ public class PushNotificationsPlugin: CAPPlugin {
         notifyListeners("registrationError", data: [
             "error": error.localizedDescription
         ])
+    }
+
+    @objc func handleDataMessage( notification: NSNotification) {
+        let userInfo: [AnyHashable : Any]
+        userInfo = notification.object as! [AnyHashable : Any]
+        print("Entire message \(userInfo)")
+        self.notifyListeners("OnRemoteNotification", data: ["data":userInfo])
     }
 }
